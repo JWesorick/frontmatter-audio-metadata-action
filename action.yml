@@ -1,0 +1,29 @@
+name: "Gatsby Audio Metadata"
+description: "Add audio metadata to gatsby frontmatter."
+inputs:
+  gh-token:
+    description: "GitHub API token. Needs read+write for the repo. Best to use secrets. ex. gh-token: ${{ secrets.GITHUB_TOKEN }}"
+    required: true
+  src-directory:
+    description: "Folder to look for frontmatter files in."
+    required: true
+    default: "src"
+  media-directory:
+    description: "Folder to look for media files in."
+    required: true
+    default: "static"
+  audio-file-variable:
+    description: "File for audio file to look for in frontmatter."
+    required: true
+    default: "audio_file"
+  audio-duration-variable:
+    description: "Frontmatter variable to write duration to."
+    required: true
+    default: "audio_file_duration"
+  audio-duration-variable:
+    description: "Frontmatter variable to write file size to."
+    required: true
+    default: "audio_file_size"
+runs:
+  using: "node12"
+  main: "dist/index.js"
