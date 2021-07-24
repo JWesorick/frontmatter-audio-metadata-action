@@ -6288,18 +6288,100 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(186);
 const github = __nccwpck_require__(438);
 
-try {
-  // `who-to-greet` input defined in action metadata file
-  const nameToGreet = core.getInput("who-to-greet");
-  console.log(`Hello ${nameToGreet}!`);
-  const time = new Date().toTimeString();
-  core.setOutput("time", time);
-  // Get the JSON webhook payload for the event that triggered the workflow
-  const payload = JSON.stringify(github.context.payload, undefined, 2);
-  console.log(`The event payload: ${payload}`);
-} catch (error) {
-  core.setFailed(error.message);
+async function getQuery(path) {
+  const context = github.context;
+  const ghToken = core.getInput("auth");
+  const octokit = github.getOctokit(ghToken);
+
+  return await octokit.graphql(
+    `
+    {
+      repository(name: $repo, owner: $owner) {
+        object(expression: $expression) {
+          id
+          ... on Tree {
+            id
+            entries {
+              type
+              path
+            }
+          }
+          ... on Blob {
+            id
+            text
+          }
+        }
+      }
+    }
+    `,
+    {
+      ...context.repo,
+      expression: `${context.sha}:${path}`,
+    }
+  );
 }
+
+// async function getBlobs(acc, { type, object, path }) {
+//   if (type === "blob") {
+//     acc.push({ type, object, path });
+//   }
+
+//   const {
+//     repository: {
+//       object: { entries },
+//     },
+//   } = await getQuery(path);
+
+//   acc.concat(entries.reduce(getBlobs, acc));
+// }
+
+function run() {
+  try {
+    const srcDir = core.getInput("src-directory");
+
+    const {
+      repository: {
+        object: { entries },
+      },
+    } = getQuery(srcDir);
+
+    console.log("ENTRIES", entries);
+
+    // getBlobs({ type: "tree", entries }).map(({ path }) => {
+    //   console.log(path);
+    //   // read blob frontmatter
+    //   // if meta tags set, skip.
+    //   // if meta tags not set, read audio file and set meta tags.
+    // });
+
+    // console.log("Done.");
+  } catch (error) {
+    core.setFailed(error.message);
+  }
+}
+
+run();
+
+// 1. Read Frontmatter.
+// 2. If not already set, load audio file.
+// 3. Calc metadata.
+// 4. Create new commit with metadata added.
+
+// {
+//   repository(name: "gatsby-macc-netlify-cms", owner: "JWesorick") {
+//     object(expression: "HEAD:src/pages/teachings") {
+//       id
+//       ... on Tree {
+//         id
+//         entries {
+//           name
+//           type
+//           mode
+//         }
+//       }
+//     }
+//   }
+// }
 
 })();
 

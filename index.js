@@ -1,9 +1,9 @@
 const core = require("@actions/core");
 const github = require("@actions/github");
 
-function getQuery(path) {
+async function getQuery(path) {
   const context = github.context;
-  const ghToken = core.getInput("gh-token");
+  const ghToken = core.getInput("auth");
   const octokit = github.getOctokit(ghToken);
 
   return await octokit.graphql(
@@ -34,21 +34,21 @@ function getQuery(path) {
   );
 }
 
-function getBlobs(acc, { type, object, path }) {
-  if (type === "blob") {
-    acc.push({ type, object, path });
-  }
+// async function getBlobs(acc, { type, object, path }) {
+//   if (type === "blob") {
+//     acc.push({ type, object, path });
+//   }
 
-  const {
-    repository: {
-      object: { entries },
-    },
-  } = getQuery(path);
+//   const {
+//     repository: {
+//       object: { entries },
+//     },
+//   } = await getQuery(path);
 
-  acc.concat(entries.reduce(getBlobs, acc));
-}
+//   acc.concat(entries.reduce(getBlobs, acc));
+// }
 
-async function run() {
+function run() {
   try {
     const srcDir = core.getInput("src-directory");
 
@@ -58,14 +58,16 @@ async function run() {
       },
     } = getQuery(srcDir);
 
-    getBlobs({ type: "tree", entries }).map(({ path }) => {
-      console.log(path);
-      // read blob frontmatter
-      // if meta tags set, skip.
-      // if meta tags not set, read audio file and set meta tags.
-    });
+    console.log("ENTRIES", entries);
 
-    console.log("Done.");
+    // getBlobs({ type: "tree", entries }).map(({ path }) => {
+    //   console.log(path);
+    //   // read blob frontmatter
+    //   // if meta tags set, skip.
+    //   // if meta tags not set, read audio file and set meta tags.
+    // });
+
+    // console.log("Done.");
   } catch (error) {
     core.setFailed(error.message);
   }
